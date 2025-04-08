@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Movie Recommendation and Review Analysis</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: black; /* Added black background to the page */
+      color: white;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: auto;
+    }
+    
+    h1 {
+      text-align: center;
+      font-size: 40px;
+    }
+
+    h3 {
+      padding: auto;
+      font-size: 20px;
+      font-style: italic;
+      color: yellow;
+    }
+
+    /* Movie details layout */
+    .movie-details {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .movie-poster img {
+      max-width: 300px;
+      transition: transform 0.3s ease;
+    }
+    
+    /* Recommendations grid */
+    .recommendations {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    
+    .recommendation {
+      text-align: center;
+      width: 18%;
+    }
+    
+    .recommendation img {
+      width: 100%;
+      cursor: pointer;
+      transition: transform 0.3s ease; /* Smooth transition for hover */
+    }
+    
+    /* Review section */
+    .review {
+      border-bottom: 1px solid #ccc;
+      padding: 10px 0;
+      font-size: 15px;
+    }
+    
+    /* Error message */
+    .error {
+      color: red;
+    }
+    
+    /* Form styles */
+    form {
+      margin-bottom: 20px;
+    }
+    
+    /* Style for the search bar and label */
+    label[for="selected_movie"] {
+      font-size: 12px; /* Smaller font for the label */
+      display: block;
+      margin-bottom: 5px;
+    }
+    
+    #selected_movie {
+      width: 1200px;       /* Bigger search bar width */
+      padding: 10px;       /* More padding to make it appear larger */
+      font-size: 16px;     /* Larger font inside the search bar for better visibility */
+      box-sizing: border-box;
+    }
+    
+    /* Style for the Show Movie Details button */
+    .show-movie-btn {
+      display: block;            /* Makes the button appear on its own line */
+      background-color: red;     /* Red background */
+      color: white;              /* White text for contrast */
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      margin-top: 10px;          /* Space from the search bar */
+      font-size: 15px;  
+      border-radius: 20px; 
+      overflow: hidden;
+      transition: transform 0.3s ease; /* Smooth transition for hover effect */
+    }
+    
+    /* Hover effects for zoom */
+    .show-movie-btn:hover {
+      transform: scale(1.05); /* Slight zoom when hovering over the button */
+    }
+    
+    .movie-poster img:hover,
+    .recommendation img:hover {
+      transform: scale(1.05); /* Slight zoom when hovering over images */
+    }
+    
+    .movie-info p[style] {
+      background-color: #ffeb3b;
+      color: black;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Movie Recommendation and Review Analysis System</h1>
+  
+  <!-- Display flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <p class="{{ category }}">{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  
+  <form method="get" action="{{ url_for('index') }}">
+    <label for="selected_movie">Search Movie:</label>
+    <input type="text" name="selected_movie" id="selected_movie" placeholder="Enter movie name..." list="movie_list" value="{{ selected_movie|default('') }}">
+    <datalist id="movie_list">
+      {% for movie in movie_list %}
+      <option value="{{ movie }}">
+      {% endfor %}
+    </datalist>
+    <button type="submit" class="show-movie-btn">Show Movie Details</button>
+  </form>
+  
+  {% if movie_info %}
+  <div class="movie-details">
+    <div class="movie-poster">
+      {% if movie_info.poster %}
+        <img src="{{ movie_info.poster }}" alt="{{ movie_info.title }}">
+      {% else %}
+        <p>No poster available</p>
+      {% endif %}
+    </div>
+    <div class="movie-info">
+      <h2>{{ movie_info.title }}</h2>
+      <p><strong>Genre:</strong> {{ movie_info.genre }}</p>
+      <p><strong>Cast:</strong> {{ movie_info.cast }}</p>
+      <p><strong>Director:</strong> {{ movie_info.crew }}</p>
+      <p><strong>Release Date:</strong> {{ movie_info.release_date }}</p>
+      <p><strong>Rating:</strong> {{ movie_info.rating }}</p>
+      <p style="background-color: #ffeb3b; padding: 10px; border-radius: 20px; overflow: hidden;">{{ movie_info.overview }}</p>
+    </div>
+  </div>
+  
+  <h3>Reviews:</h3>
+  {% if reviews %}
+    {% for review in reviews %}
+      <div class="review">
+        <p><strong>Author:</strong> {{ review.author }}</p>
+        <p>{{ review.content }}</p>
+        {% set sentiment = analyze_sentiment(review.content) %}
+        {% if sentiment == 'positive' %}
+          <p><strong>Review:</strong> {{ sentiment.capitalize() }} <span style="font-size:25px;">👍</span></p>
+        {% else %}
+          <p><strong>Review:</strong> {{ sentiment.capitalize() }} <span style="font-size:25px;">👎</span></p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No reviews available.</p>
+  {% endif %}
+  
+  <h3>Recommendations:</h3>
+  <div class="recommendations">
+    {% for rec in recommendations %}
+      <div class="recommendation">
+        {% if rec.poster %}
+          <a href="{{ url_for('index') }}?selected_movie={{ rec.name }}">
+            <img src="{{ rec.poster }}" alt="{{ rec.name }}">
+          </a>
+        {% else %}
+          <p>No image</p>
+        {% endif %}
+        <p>{{ rec.name }}</p>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>
